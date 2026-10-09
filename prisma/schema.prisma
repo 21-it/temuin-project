@@ -1,0 +1,89 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("STAFF") // "ADMIN" | "STAFF"
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  items     Item[]
+  createdAt DateTime @default(now())
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  items     Item[]
+  createdAt DateTime @default(now())
+}
+
+model Item {
+  id               String      @id @default(cuid())
+  type             String      // "LOST" | "FOUND"
+  title            String
+  description      String
+  categoryId       String
+  category         Category    @relation(fields: [categoryId], references: [id])
+  locationId       String
+  location         Location    @relation(fields: [locationId], references: [id])
+  dateOccurred     DateTime
+  status           String      @default("PENDING") // "PENDING" | "ACTIVE" | "CLAIMED" | "RETURNED" | "REJECTED"
+  trackingCode     String      @unique
+  reporterName     String
+  reporterClass    String?     // e.g. "XII MIPA 1" or "Guru PJOK"
+  reporterContact  String      // WA number or email - hidden from public
+  handoverDate     DateTime?
+  handoverReceiver String?
+  adminNotes       String?
+  images           ItemImage[]
+  claims           Claim[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model ItemImage {
+  id        String   @id @default(cuid())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url       String
+  createdAt DateTime @default(now())
+}
+
+model Claim {
+  id               String    @id @default(cuid())
+  itemId           String
+  item             Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  claimantName     String
+  claimantClass    String?   // e.g. "X IPS 2"
+  claimantContact  String    // WA / email
+  proofDescription String
+  status           String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  adminNotes       String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model SchoolSetting {
+  id           String   @id @default("default")
+  name         String   @default("SMA Negeri 1 Harapan")
+  tagline      String?  @default("Layanan Terpadu Lapor & Temu Barang Hilang Kampus")
+  logoUrl      String?
+  contactEmail String   @default("info@sekolah.sch.id")
+  contactPhone String   @default("+62 812-3456-7890")
+  address      String?  @default("Jl. Pendidikan No. 45, Jakarta")
+  updatedAt    DateTime @updatedAt
+}
